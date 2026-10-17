@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+*.pyc
+__pycache__/
+
+# Environment & local files
+.env
+.env.local
+*.log
+uploads/
+data/billbox.db
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
