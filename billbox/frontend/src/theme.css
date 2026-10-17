@@ -1,0 +1,93 @@
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* Color palette */
+  --color-background: #F7F6F2;
+  --color-surface: #FFFFFF;
+  --color-border: #E7E5E0;
+  --color-text: #1F2937;
+  --color-muted: #6B7280;
+  --color-primary: #0F766E;
+  --color-primary-hover: #115E59;
+  --color-primary-tint: #CCFBF1;
+  --color-warning: #D97706;
+  --color-warning-tint: #FEF3C7;
+  --color-error: #DC2626;
+  --color-error-tint: #FEE2E2;
+  --color-success: #16A34A;
+  --color-success-tint: #DCFCE7;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 28px;
+  --line-height: 1.5;
+
+  /* Layout */
+  --radius-card: 12px;
+  --radius-control: 8px;
+  --spacing: 8px;
+  --max-content-width: 1200px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+
+  /* Motion */
+  --duration: 150ms;
+  --timing: ease-out;
+}
+
+/* Global resets */
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height);
+  color: var(--color-text);
+  background: var(--color-background);
+}
+
+/* Root element resets */
+#root {
+  min-height: 100vh;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* Amounts */
+.amount {
+  font-family: var(--font-mono);
+}
+
+/* Status chips */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--radius-control);
+  font-size: var(--font-size-sm);
+}
+.chip-success { background: var(--color-success-tint); color: var(--color-success); }
+.chip-warning { background: var(--color-warning-tint); color: var(--color-warning); }
+.chip-error   { background: var(--color-error-tint);   color: var(--color-error); }
+
+/* Skeleton loader */
+.skeleton {
+  background: var(--color-border);
+  border-radius: var(--radius-control);
+  animation: pulse var(--duration) infinite alternate;
+}
+@keyframes pulse {
+  from { opacity: 0.6; }
+  to   { opacity: 1; }
+}

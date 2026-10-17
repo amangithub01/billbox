@@ -1,0 +1,6 @@
+# Data and environment files
+/data/
+.env
+.venv/
+node_modules/
+/dist/

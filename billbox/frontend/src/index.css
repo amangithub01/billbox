@@ -1,0 +1,17 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
+
+/* Custom fonts – Inter for UI and JetBrains Mono for code */
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px; /* base size per spec */
+    line-height: 1.5;
+  }
+  code, .mono {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+}
+
+
