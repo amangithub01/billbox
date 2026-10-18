@@ -97,6 +97,33 @@ npm run dev
 
 Open http://localhost:5173. When the backend is connected, the header shows **Backend Online (Port 8000)**.
 
+---
+
+## 🏗️ Architecture & Data Flow
+
+```mermaid
+flowchart TD
+    A[📄 Invoice PDF / Image / Scan] --> B[Frontend Dropzone - React 19]
+    B --> C{Backend Running?}
+    
+    C -- Yes --> D[FastAPI Backend - Port 8000]
+    D --> E[PyMuPDF / OpenCV Image Preprocessing]
+    E --> F[Local Ollama VLM - qwen2.5vl:3b]
+    F --> G[Normalized JSON Extraction]
+    G --> H[GST Validation Engine]
+    H --> I[(SQLite Database)]
+    
+    C -- Offline / Demo --> J[Local Simulated AI Engine]
+    J --> H
+    
+    I --> K[Live Inbox Dashboard]
+    K --> L{Validation Passed?}
+    L -- Yes --> M[● Auto-Approved]
+    L -- Flagged --> N[▲ Needs Review]
+    N --> O[1-Click Quick Approve / Deep Review Screen]
+```
+
+
 ## Tech stack
 
 | Layer | Technologies |
