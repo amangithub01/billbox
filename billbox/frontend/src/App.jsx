@@ -6,6 +6,7 @@ import Navbar from './components/Navbar';
 import SettingsModal from './components/SettingsModal';
 import KPICard from './components/KPICard';
 import UploadArea from './components/UploadArea';
+import { performClientOCR } from './utils/ocr';
 function InboxPage({ invoices, setInvoices, isBackendOnline, checkBackend }) {
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -58,78 +59,27 @@ function InboxPage({ invoices, setInvoices, isBackendOnline, checkBackend }) {
         setInvoices(refreshed);
         showToast(`✓ Successfully processed ${file.name}!`, 'success');
       } else {
-        // DEMO MODE: Realistic AI extraction simulation
-        setUploadStep('Scanning invoice image with OCR...');
-        await new Promise((r) => setTimeout(r, 600));
-        setUploadStep('Extracting vendor, line items & calculating GST...');
-        await new Promise((r) => setTimeout(r, 700));
+        // Run real client-side in-browser OCR on the photo
+        setUploadStep('Reading text & scanning photo with OCR engine...');
+        const extractedData = await performClientOCR(file, (msg) => setUploadStep(msg));
 
-        const cleanName = file.name.replace(/\.[^/.]+$/, '');
         const newId = invoices.length > 0 ? Math.max(...invoices.map((i) => Number(i.id) || 0)) + 1 : 1;
-        const randomSubtotal = Math.floor(Math.random() * 8000) + 1500;
-        const cgst = +(randomSubtotal * 0.09).toFixed(2);
-        const sgst = +(randomSubtotal * 0.09).toFixed(2);
-        const total = +(randomSubtotal + cgst + sgst).toFixed(2);
-
         const newInvoice = {
           id: newId,
-          invoice_number: `INV-${new Date().getFullYear()}-${String(newId).padStart(3, '0')}`,
-          invoice_no: `INV-${new Date().getFullYear()}-${String(newId).padStart(3, '0')}`,
-          invoice_date: new Date().toISOString().split('T')[0],
-          date: new Date().toISOString().split('T')[0],
-          vendor_name: `${cleanName.toUpperCase()} Solutions`,
-          total_amount: total,
-          total: total,
-          subtotal: randomSubtotal,
-          cgst,
-          sgst,
-          igst: 0,
-          gstin: '27AABCU9603R1ZM',
-          vendor_gstin: '27AABCU9603R1ZM',
-          status: 'needs_review',
-          flags: ['Auto-extracted in Demo Mode. Please verify line item amounts.'],
-          items: [
-            {
-              description: `Invoice item from ${cleanName}`,
-              hsn: '9983',
-              qty: 1,
-              rate: randomSubtotal,
-              amount: randomSubtotal,
-            },
-          ],
+          ...extractedData,
         };
 
         setInvoices((prev) => [newInvoice, ...prev]);
-        showToast(`✓ Invoice from ${file.name} successfully extracted & added!`, 'success');
+        if (extractedData.gstin) {
+          showToast(`✓ Extracted GSTIN (${extractedData.gstin}) from ${file.name}!`, 'success');
+        } else {
+          showToast(`✓ Read ${file.name} (No GSTIN found on document)`, 'info');
+        }
       }
       setFile(null);
     } catch (err) {
-      console.warn('Backend upload failed, adding to demo mode:', err);
-      // Fallback to demo mode so user task is never blocked
-      const newId = invoices.length > 0 ? Math.max(...invoices.map((i) => Number(i.id) || 0)) + 1 : 1;
-      const cleanName = file.name.replace(/\.[^/.]+$/, '');
-      const newInvoice = {
-        id: newId,
-        invoice_number: `INV-2024-${String(newId).padStart(3, '0')}`,
-        invoice_no: `INV-2024-${String(newId).padStart(3, '0')}`,
-        invoice_date: new Date().toISOString().split('T')[0],
-        vendor_name: `${cleanName} Services`,
-        total_amount: 4500.0,
-        total: 4500.0,
-        subtotal: 3813.56,
-        cgst: 343.22,
-        sgst: 343.22,
-        igst: 0,
-        gstin: '27AABCU9603R1ZM',
-        vendor_gstin: '27AABCU9603R1ZM',
-        status: 'needs_review',
-        flags: ['Extracted in demo mode'],
-        items: [
-          { description: 'Consulting & Setup', hsn: '9983', qty: 1, rate: 3813.56, amount: 3813.56 },
-        ],
-      };
-      setInvoices((prev) => [newInvoice, ...prev]);
-      showToast(`✓ Processed ${file.name} in Demo Mode!`, 'success');
+      console.warn('Backend upload failed:', err);
+      showToast(`Upload failed: ${err.message || 'Check backend connection'}`, 'error');
       setFile(null);
     } finally {
       setUploading(false);

@@ -19,6 +19,8 @@ def validate_invoice(invoice: dict) -> List[str]:
     if gstin:
         if not is_valid_gstin(gstin):
             flags.append("Invalid GSTIN format or checksum")
+    else:
+        flags.append("Missing Vendor GSTIN")
     # Date validation
     inv_date_str = invoice.get("date")
     if inv_date_str:

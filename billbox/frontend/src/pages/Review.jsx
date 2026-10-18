@@ -198,8 +198,8 @@ export default function Review({ invoices, setInvoices }) {
     flags = [],
   } = invoice;
 
-  const currentGstin = gstin || vendor_gstin || '';
-  const isGstinValid = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(currentGstin);
+  const currentGstin = (gstin || vendor_gstin || '').trim().toUpperCase();
+  const isGstinValid = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z|C]{1}[0-9A-Z]{1}$/i.test(currentGstin);
 
   return (
     <div style={{ minHeight: '100vh', background: '#F8FAFC', color: '#0F172A', fontFamily: 'Inter, system-ui, sans-serif' }}>

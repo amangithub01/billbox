@@ -5,9 +5,14 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
 from .api import router as api_router
+from .db import init_db
 
 # Create FastAPI app instance
-app = FastAPI()
+app = FastAPI(title="BillBox API", version="1.0.0")
+
+@app.on_event("startup")
+def on_startup():
+    init_db()
 
 # CORS configuration (allow all for demo)
 app.add_middleware(

@@ -79,39 +79,75 @@ async def upload_invoice(file: UploadFile = File(...), db: Session = Depends(get
     with open(file_path, "wb") as out_file:
         shutil.copyfileobj(file.file, out_file)
 
-    invoice_num = f"INV-{uuid.uuid4().hex[:6].upper()}"
-    dummy_invoice = models.Invoice(
-        invoice_no=invoice_num,
-        date=date.today(),
-        vendor_name=f"Vendor ({filename.split('.')[0][:15]})",
-        subtotal=1000.0,
-        total=1180.0,
-        cgst=90.0,
-        sgst=90.0,
-        igst=0.0,
-        status="needs_review",
-        stage="ocr",
+    # 1. Run real Ollama Vision / text extraction pipeline
+    extracted = await extract.extract_with_ollama(file_path)
+
+    # 2. Run automated validation rules
+    flags = validate.validate_invoice(extracted)
+    status_str = "approved" if not flags else "needs_review"
+
+    # 3. Parse date safely
+    inv_date = date.today()
+    if extracted.get("date"):
+        try:
+            inv_date = date.fromisoformat(str(extracted["date"]))
+        except Exception:
+            inv_date = date.today()
+
+    db_invoice = models.Invoice(
+        invoice_no=str(extracted.get("invoice_no") or f"INV-{uuid.uuid4().hex[:6].upper()}"),
+        date=inv_date,
+        vendor_name=str(extracted.get("vendor_name") or filename.split('.')[0]),
+        subtotal=float(extracted.get("subtotal") or 0.0),
+        cgst=float(extracted.get("cgst") or 0.0),
+        sgst=float(extracted.get("sgst") or 0.0),
+        igst=float(extracted.get("igst") or 0.0),
+        total=float(extracted.get("total") or 0.0),
+        status=status_str,
+        stage="extracted",
         image_path=str(file_path),
         source_hash=uuid.uuid4().hex[:16],
-        vendor_gstin="27AAEPM1234C1Z5",
+        vendor_gstin=str(extracted.get("vendor_gstin") or ""),
     )
-    db.add(dummy_invoice)
+    db.add(db_invoice)
     db.commit()
-    db.refresh(dummy_invoice)
+    db.refresh(db_invoice)
 
-    # Add sample line items
-    item1 = models.LineItem(invoice_id=dummy_invoice.id, description="Consulting Services", hsn="9983", qty=1, rate=600.0, amount=600.0)
-    item2 = models.LineItem(invoice_id=dummy_invoice.id, description="Cloud Hosting Fee", hsn="9983", qty=1, rate=400.0, amount=400.0)
-    db.add(item1)
-    db.add(item2)
+    # 4. Save extracted line items
+    raw_items = extracted.get("items", [])
+    if raw_items and isinstance(raw_items, list):
+        for it in raw_items:
+            if isinstance(it, dict):
+                item = models.LineItem(
+                    invoice_id=db_invoice.id,
+                    description=str(it.get("description") or "Item"),
+                    hsn=str(it.get("hsn") or ""),
+                    qty=float(it.get("qty") or 1.0),
+                    rate=float(it.get("rate") or 0.0),
+                    amount=float(it.get("amount") or 0.0),
+                )
+                db.add(item)
+    else:
+        item = models.LineItem(
+            invoice_id=db_invoice.id,
+            description=f"Services from {db_invoice.vendor_name}",
+            hsn="",
+            qty=1.0,
+            rate=db_invoice.subtotal or db_invoice.total,
+            amount=db_invoice.subtotal or db_invoice.total,
+        )
+        db.add(item)
     db.commit()
 
     return {
-        "id": dummy_invoice.id,
-        "invoice_number": dummy_invoice.invoice_no,
-        "vendor_name": dummy_invoice.vendor_name,
-        "total_amount": dummy_invoice.total,
-        "detail": f"Uploaded {filename} successfully and processed with AI",
+        "id": db_invoice.id,
+        "invoice_number": db_invoice.invoice_no,
+        "vendor_name": db_invoice.vendor_name,
+        "total_amount": db_invoice.total,
+        "status": db_invoice.status,
+        "vendor_gstin": db_invoice.vendor_gstin,
+        "flags": flags,
+        "detail": f"Processed {filename} using {extracted.get('extraction_engine', 'AI')}",
     }
 
 
