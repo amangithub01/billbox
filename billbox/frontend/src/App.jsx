@@ -450,8 +450,23 @@ function InboxPage({ invoices, setInvoices, isBackendOnline, checkBackend }) {
 }
 
 export default function App() {
-  const [invoices, setInvoices] = useState(sampleInvoices);
+  const [invoices, setInvoices] = useState(() => {
+    try {
+      const saved = localStorage.getItem('billbox_invoices');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return sampleInvoices;
+  });
   const [isBackendOnline, setIsBackendOnline] = useState(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('billbox_invoices', JSON.stringify(invoices));
+    } catch {}
+  }, [invoices]);
 
   const checkBackend = () => {
     fetch('/invoices')

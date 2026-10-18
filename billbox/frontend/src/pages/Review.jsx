@@ -25,7 +25,21 @@ export default function Review({ invoices, setInvoices }) {
       }
     }
 
-    // 2. Try fetching from backend
+    // 2. Check localStorage
+    try {
+      const saved = localStorage.getItem('billbox_invoices');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        const found = parsed.find((inv) => String(inv.id) === String(id));
+        if (found) {
+          setInvoice(JSON.parse(JSON.stringify(found)));
+          setLoading(false);
+          return;
+        }
+      }
+    } catch {}
+
+    // 3. Try fetching from backend
     fetch(`/invoices/${id}`)
       .then((res) => {
         if (!res.ok) throw new Error('Invoice not found in backend');
@@ -36,7 +50,7 @@ export default function Review({ invoices, setInvoices }) {
         setLoading(false);
       })
       .catch(() => {
-        // 3. Fallback to sample invoices
+        // 4. Fallback to sample invoices
         const found = sampleInvoices.find((inv) => String(inv.id) === String(id));
         if (found) {
           setInvoice(JSON.parse(JSON.stringify(found)));
@@ -412,22 +426,32 @@ export default function Review({ invoices, setInvoices }) {
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#64748B', marginBottom: '5px' }}>
                     DATE
                   </label>
-                  <input
-                    type="date"
-                    value={invoice_date || dateVal || ''}
-                    onChange={(e) => {
-                      handleChange('invoice_date', e.target.value);
-                      handleChange('date', e.target.value);
-                    }}
-                    style={{
-                      width: '100%',
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      fontSize: '13px',
-                      boxSizing: 'border-box',
-                    }}
-                  />
+                  {(() => {
+                    const raw = String(invoice_date || dateVal || '').trim();
+                    let formatted = raw;
+                    if (!/^\d{4}-\d{2}-\d{2}$/.test(formatted)) {
+                      const d = new Date(raw);
+                      formatted = !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+                    }
+                    return (
+                      <input
+                        type="date"
+                        value={formatted}
+                        onChange={(e) => {
+                          handleChange('invoice_date', e.target.value);
+                          handleChange('date', e.target.value);
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '8px 12px',
+                          borderRadius: '8px',
+                          border: '1px solid #CBD5E1',
+                          fontSize: '13px',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    );
+                  })()}
                 </div>
               </div>
 

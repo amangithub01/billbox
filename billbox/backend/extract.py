@@ -13,12 +13,17 @@ from .gstin import format_gstin, is_valid_gstin
 logger = logging.getLogger(__name__)
 
 # Regular expressions for date, number, and GSTIN
-_DATE_REGEX = re.compile(r"^(\d{1,2})[\-/](\d{1,2})[\-/](\d{2,4})$")
+_DATE_REGEX = re.compile(r"^(\d{1,2})[\-/.\s](\d{1,2}|[A-Za-z]{3})[\-/.\s](\d{2,4})$")
 _NUMBER_REGEX = re.compile(r"[^0-9.,-]")
 _GSTIN_REGEX = re.compile(r"\b([0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1})\b")
 
+_MONTH_MAP = {
+    "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+    "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12
+}
+
 def _parse_date(value: str) -> Optional[str]:
-    """Convert various Indian date formats (DD-MM-YYYY, DD/MM/YYYY) to ISO YYYY-MM-DD."""
+    """Convert various Indian date formats (DD-MM-YYYY, DD/MM/YYYY, DD.MM.YYYY, DD Mon YYYY) to ISO YYYY-MM-DD."""
     if not value or not isinstance(value, str):
         return None
     val = value.strip()
@@ -28,10 +33,19 @@ def _parse_date(value: str) -> Optional[str]:
         if re.match(r"^\d{4}-\d{2}-\d{2}$", val):
             return val
         return None
-    day, month, year = m.groups()
+    day, month_raw, year = m.groups()
     year = int(year)
     if year < 100:
         year += 2000 if year < 50 else 1900
+    
+    if month_raw.lower() in _MONTH_MAP:
+        month = _MONTH_MAP[month_raw.lower()]
+    else:
+        try:
+            month = int(month_raw)
+        except ValueError:
+            return None
+
     try:
         dt = datetime(year=int(year), month=int(month), day=int(day))
         return dt.strftime("%Y-%m-%d")
