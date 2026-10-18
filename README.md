@@ -10,9 +10,6 @@ Small shops and freelancers lose hours every month typing bills into spreadsheet
 [![Open-weight model](https://img.shields.io/badge/Model-Qwen2.5--VL_3B-blue?style=flat-square)](https://ollama.com/library/qwen2.5vl)
 [![Runs locally](https://img.shields.io/badge/Inference-Ollama_(local)-success?style=flat-square)](https://ollama.com/)
 
-![Inbox screenshot](docs/inbox.png)
-![Review screenshot](docs/review.png)
-
 ---
 
 ## Who it's for
