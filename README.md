@@ -161,6 +161,3 @@ MIT
 
 
 ---
-
-## 📝 License
-Distributed under the **MIT License**. Free for open-source and commercial use.
